@@ -1,5 +1,3 @@
-#https://github.com/meemknight/raylibCmakeSetup
-#Version 1.0.0
 
 cmake_minimum_required(VERSION 3.16)
 
@@ -24,15 +22,14 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE) #link time optimization
 # Ensure SFML is built as static libraries
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build Raylib as static libraries" FORCE)
 
-
-
-
-project(mygame)
+# sets name of the project
+project(TD_Shooter)
 
 
 
 
 #Add raylib, and here you would add other libraries if needed!
+# Go into the subdirectory and run the CMakeLists.txt
 add_subdirectory(thirdparty/raylib-5.0)
 add_subdirectory(thirdparty/imgui-docking)
 add_subdirectory(thirdparty/rlImGui)
@@ -63,7 +60,7 @@ else()
 
 endif()
 
-target_sources("${CMAKE_PROJECT_NAME}" PRIVATE ${MY_SOURCES} )
+target_sources("${CMAKE_PROJECT_NAME}" PRIVATE ${MY_SOURCES})
 
 
 if(MSVC) # If using the VS compiler...
@@ -77,12 +74,15 @@ if(MSVC) # If using the VS compiler...
 
 
 endif()
-
+#target_ template (<target> other stuff)
+# This means that the CMAKE Project in executables wwhen compiling will include the directories in this include directory
+# Finds the .h file
 target_include_directories("${CMAKE_PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/")
 
 
 
 # Link raylib library statically, Here wou would add other libraries!
+# Links the libraries to the executable
 target_link_libraries("${CMAKE_PROJECT_NAME}" PRIVATE 
 	raylib_static imgui rlimgui
 )
