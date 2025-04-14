@@ -1,4 +1,5 @@
 #include "raylib.h"
+#include "raymath.h"
 #include <iostream>
 
 #pragma region imgui
@@ -7,86 +8,79 @@
 #include "imguiThemes.h"
 #pragma endregion
 
+struct GameplayData {
+	Vector2 playerPosition = { 100,100 };
+};
+GameplayData data;
+constexpr int screenWidth = 1200;
+constexpr int screenHeight = 800;
+
+void UpdateGame();
 int main(void)
 {
-	const int screenWidth = 750;
-	const int screenHeight = 750;
 	// Checks the last time the snake has moved
 	bool showImGUI = true;
 
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-	InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
+	InitWindow(screenWidth, screenHeight, "TD Shooter");
 	SetTargetFPS(60);
 
-#pragma region imgui
-	rlImGuiSetup(true);
-
-	//you can use whatever imgui theme you like!
-	//ImGui::StyleColorsDark();
-	//imguiThemes::yellow();
-	//imguiThemes::gray();
-	//imguiThemes::green();
-	//imguiThemes::red();
-//
-//	imguiThemes::embraceTheDarkness();
-//
-//
-//	ImGuiIO& io = ImGui::GetIO(); (void)io;
-//	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
-//	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-//	io.FontGlobalScale = 2;
-//
-//	ImGuiStyle& style = ImGui::GetStyle();
-//	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-//	{
-//		//style.WindowRounding = 0.0f;
-//		style.Colors[ImGuiCol_WindowBg].w = 0.5f;
-//		//style.Colors[ImGuiCol_DockingEmptyBg].w = 0.f;
-//	}
-//
-#pragma endregion
+	// Get a single sprite fron the bundle
+	Image spriteBundle = LoadImage(RESOURCES_PATH "/idle.png");
+	const float spriteWidth = spriteBundle.width /4;
+	const float spriteHeight = spriteBundle.height/3;
+	Rectangle cropSpace = { 0,0,spriteWidth,spriteHeight };
+	ImageCrop(&spriteBundle, cropSpace);
+	Texture2D spriteTexture = LoadTextureFromImage(spriteBundle);
+	// Unload image to save memory
+	UnloadImage(spriteBundle);
 	while (!WindowShouldClose())
 	{
+		UpdateGame();
+
+		BeginDrawing();
+
 		ClearBackground(BLACK);
 
+		DrawRectangle(100,100,100,100,WHITE);
+		DrawTextureEx(spriteTexture, data.playerPosition,0,6,WHITE);
+		EndDrawing();
 
-//
-//#pragma region imgui
-//			rlImGuiBegin();
-//
-//			ImGui::PushStyleColor(ImGuiCol_WindowBg, {});
-//			ImGui::PushStyleColor(ImGuiCol_DockingEmptyBg, {});
-//			ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
-//			ImGui::PopStyleColor(2);
-//#pragma endregion
-//
-//
-//			ImGui::Begin("Test");
-//			ImGui::End();
-//#pragma region imgui
-//			rlImGuiEnd();
-//
-//			if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-//			{
-//				ImGui::UpdatePlatformWindows();
-//				ImGui::RenderPlatformWindowsDefault();
-//			}
-//#pragma endregion
-//
-//		}
-//		EndDrawing();
-//
-//
-//#pragma region imgui
-//	rlImGuiShutdown();
-//#pragma endregion
-//
-//
-//
+
+	}
+
 	CloseWindow();
 
 	return 0;
 }
 
 
+void UpdateGame() {
+	// Get the render time
+	float deltaTime = GetFrameTime();
+#pragma region movement
+	Vector2 move = {};
 
+	if (IsKeyDown(KEY_W)) {
+		move.y = { -1 };
+	}
+		if (IsKeyDown(KEY_S)) {
+		move.y = { 1 };
+	}
+		if (IsKeyDown(KEY_A)) {
+		move.x= { -1 };
+	}
+		if (IsKeyDown(KEY_D)) {
+		move.x = { 1 };
+	}
+
+		if (move.x != 0 || move.y != 0) {
+			// Make sure 1 unit is being moved
+			move = Vector2Normalize(move);
+			// Our velo, just distance/time 
+			move = Vector2Scale(move, deltaTime * 200);
+			data.playerPosition = Vector2Add(data.playerPosition, move);
+		}
+	
+#pragma endregion
+}
