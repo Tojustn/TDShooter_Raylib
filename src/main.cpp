@@ -8,97 +8,99 @@
 #include "imguiThemes.h"
 #pragma endregion
 
+#pragma region GameLayer
+#include <GameLayer/tiledRenderer.h>
+#include <GameLayer/spritesheet.h>
+#pragma endregion
+
 struct GameplayData {
 	Vector2 playerPosition = { 100,100 };
 };
+
+TiledRenderer tiledRenderer;
 GameplayData data;
+
+
 constexpr int screenWidth = 1200;
 constexpr int screenHeight = 1200;
 
 void UpdateGame(int&);
+
+
+
+
 int main(void)
 {
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 	InitWindow(screenWidth, screenHeight, "TD Shooter");
 	SetTargetFPS(60);
 
-#pragma region textureSprite
+#pragma region spriteTexture 
 	// Load the sprite sheet image
-	Image spriteBundle = LoadImage(RESOURCES_PATH "/walk.png");
-	const float spriteWidth = spriteBundle.width / 8;
-	const float spriteHeight = spriteBundle.height / 3;
-
+	constexpr int spriteWidth = 16;
+	constexpr int spriteHeight = 16;
 	// Orientation 0 Right, 1 Down, 2 Up, 3 Left
 	int orientation = 0;
+	Image spriteBundle = LoadImage(RESOURCES_PATH "/walk.png");
+	Spritesheet walkSprite(spriteBundle);
+	walkSprite.loadTexture();
 
-	// Crop the sprite for the right direction (Orientation 0)
-	Rectangle cropSpaceRight = { 0, 0, spriteWidth, spriteHeight };
-	ImageCrop(&spriteBundle, cropSpaceRight);
-	Texture2D rightSprite = LoadTextureFromImage(spriteBundle);
-	UnloadImage(spriteBundle); // Unload after creating the texture for right orientation
 
-	// Reload the sprite sheet and crop for the down direction (Orientation 1)
-	spriteBundle = LoadImage(RESOURCES_PATH "/walk.png");
-	Rectangle cropSpaceDown = { 0, 1 * spriteHeight, spriteWidth, spriteHeight };
-	ImageCrop(&spriteBundle, cropSpaceDown);
-	Texture2D downSprite = LoadTextureFromImage(spriteBundle);
-	UnloadImage(spriteBundle); // Unload after creating the texture for down orientation
 
-	// Reload the sprite sheet and crop for the up direction (Orientation 2)
-	spriteBundle = LoadImage(RESOURCES_PATH "/walk.png");
-	Rectangle cropSpaceUp = { 0, 2 * spriteHeight, spriteWidth, spriteHeight };
-	ImageCrop(&spriteBundle, cropSpaceUp);
-	Texture2D upSprite = LoadTextureFromImage(spriteBundle);
-	UnloadImage(spriteBundle); // Unload after creating the texture for up orientation
+#pragma endregion 
 
-	// Reload the sprite sheet and crop for the left direction (Orientation 3)
-	spriteBundle = LoadImage(RESOURCES_PATH "/walk.png");
-	Rectangle cropSpaceLeft = { 0, 0, spriteWidth, spriteHeight };
-	ImageCrop(&spriteBundle, cropSpaceLeft);
-	ImageFlipHorizontal(&spriteBundle); // Flip the sprite vertically for the left orientation
-	Texture2D leftSprite = LoadTextureFromImage(spriteBundle);
-	UnloadImage(spriteBundle); // Unload after creating the texture for left orientation
-
+#pragma region camera 
+	Camera2D camera{ 0 };
+	camera.offset = { screenWidth / 2, screenHeight / 2 };
+	camera.zoom = 1.0f;
 #pragma endregion
 
-
 #pragma region textureBG
-	Texture background = LoadTexture(RESOURCES_PATH "/TD_Shooter_BG.png");
+	tiledRenderer.texture = LoadTexture(RESOURCES_PATH "/TD_Shooter_BG.png");
 #pragma endregion	
 	while (!WindowShouldClose())
 	{
-		UpdateGame(orientation);
 		BeginDrawing();
-		ClearBackground(BLACK);
 
-		DrawTexture(background, 0, 0, WHITE);
+
+		ClearBackground(BLACK);
+		BeginMode2D(camera);
+		UpdateGame(orientation);
+
+
+		tiledRenderer.draw(camera);
+
+		camera.target = data.playerPosition;
 		if (orientation == 0) {
-			DrawTextureEx(rightSprite, data.playerPosition, 0, 6, WHITE);
+			walkSprite.drawSprite(data.playerPosition, { 32,32,spriteWidth,spriteHeight }, 0, false);
 		}
 		else if (orientation == 1) {
-			DrawTextureEx(downSprite, data.playerPosition, 0, 6, WHITE);
+
+			walkSprite.drawSprite(data.playerPosition, { 32,112,spriteWidth,spriteHeight }, 0, false);
 		}
 		else if (orientation == 2) {
-			DrawTextureEx(upSprite, data.playerPosition, 0, 6, WHITE);
+
+			walkSprite.drawSprite(data.playerPosition, { 32,192,spriteWidth,spriteHeight }, 0, false);
 		}
 		else if (orientation == 3) {
-			DrawTextureEx(leftSprite, data.playerPosition, 0, 6, WHITE);
+
+			walkSprite.drawSprite(data.playerPosition, { 32,32,spriteWidth,spriteHeight }, 0, true);
 		}
+		EndMode2D();
 		EndDrawing();
-
-
 	}
 
-	CloseWindow();
+		CloseWindow();
 
-	return 0;
-}
+		return 0;
+	}
 
 
-void UpdateGame(int& orientation) {
+void UpdateGame(int& orientation){
 	// Get the render time
 	float deltaTime = GetFrameTime();
 #pragma region movement
+
 	Vector2 move = {};
 
 	if (IsKeyDown(KEY_W)) {
@@ -118,19 +120,19 @@ void UpdateGame(int& orientation) {
 		// Make sure 1 unit is being moved
 		move = Vector2Normalize(move);
 		// Our velo, just distance/time 
-		move = Vector2Scale(move, deltaTime * 200);
+		move = Vector2Scale(move, deltaTime * 400);
 		data.playerPosition = Vector2Add(data.playerPosition, move);
 		if (move.y < 0) {
 			orientation = 2;
-			
+
 		}
 		if (move.y > 0) {
 			orientation = 1;
 		}
-		if (move.x > 0 ) {
+		if (move.x > 0) {
 			orientation = 0;
 		}
-		if (move.x <  0) {
+		if (move.x < 0) {
 			orientation = 3;
 		}
 

@@ -1,0 +1,28 @@
+{
+    "animations": {
+        "walkRight": {
+            "startX": 32,
+            "startY": 48,
+            "frameWidth": 16,
+            "frameHeight": 16,
+            "frameCount": 8,
+            "direction": "right"
+        },
+        "walkDown": {
+            "startX": 32,
+            "startY": 112,
+            "frameWidth": 16,
+            "frameHeight": 16,
+            "frameCount": 8,
+            "direction": "down"
+        },
+        "walkUp": {
+            "startX": 32,
+            "startY": 164,
+            "frameWidth": 16,
+            "frameHeight": 16,
+            "frameCount": 8,
+            "direction": "up"
+        }
+    }
+}
