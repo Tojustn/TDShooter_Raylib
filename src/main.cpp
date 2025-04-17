@@ -1,4 +1,4 @@
-#include "raylib.h"
+#include <raylib.h>
 #include "raymath.h"
 #include <iostream>
 
@@ -23,10 +23,7 @@ GameplayData data;
 
 constexpr int screenWidth = 1200;
 constexpr int screenHeight = 1200;
-
 void UpdateGame(int&);
-
-
 
 
 int main(void)
@@ -45,23 +42,28 @@ int main(void)
 	Spritesheet walkSprite(spriteBundle);
 	walkSprite.loadTexture();
 
-
+	Image spriteWeapon{ LoadImage(RESOURCES_PATH "/Gun.png") };
+	Texture spriteWeaponText{ LoadTextureFromImage(spriteWeapon) };
 
 #pragma endregion 
 
+
+	Texture cursorTexture{ LoadTexture(RESOURCES_PATH "/cursor.png") };
+	HideCursor();
 #pragma region camera 
 	Camera2D camera{ 0 };
 	camera.offset = { screenWidth / 2, screenHeight / 2 };
 	camera.zoom = 1.0f;
 #pragma endregion
-
+	Vector2 mousePosition{ 0,0 };
+	Vector2 screenCenter{ screenWidth / 2.f, screenHeight / 2.f };
 #pragma region textureBG
 	tiledRenderer.texture = LoadTexture(RESOURCES_PATH "/TD_Shooter_BG.png");
 #pragma endregion	
 	while (!WindowShouldClose())
 	{
-		BeginDrawing();
 
+		BeginDrawing();
 
 		ClearBackground(BLACK);
 		BeginMode2D(camera);
@@ -86,17 +88,42 @@ int main(void)
 
 			walkSprite.drawSprite(data.playerPosition, { 32,32,spriteWidth,spriteHeight }, 0, true);
 		}
+
+
+#pragma region mousePos
+
+		mousePosition =  GetMousePosition() ;
+	
+		Vector2 mouseDirection{ Vector2Subtract(mousePosition,  screenCenter) };
+		if (Vector2Length(mouseDirection) == 0.f) {
+			mouseDirection = { 1,0 };
+		}
+		else {
+			mouseDirection = Vector2Normalize(mouseDirection);
+		}
+		// Get the angle in radians of the mouse to the middle of screen 
+		float mouseAngle = atan2(mouseDirection.y, mouseDirection.x);
+		// No need to make negative since raylib has positive 90 facing down
+		DrawTexturePro(spriteWeaponText, { 12,8,27,16 }, { data.playerPosition.x +  cos(mouseAngle ) * 64, 
+			data.playerPosition.y + sin(mouseAngle)*64, 27 * 3,16 * 3 }, { 13.5,8 }, mouseAngle* RAD2DEG, WHITE);
+	
+
+#pragma endregion
 		EndMode2D();
+		DrawTexture(cursorTexture, GetMouseX() - 16, GetMouseY() - 16, WHITE);
 		EndDrawing();
 	}
 
-		CloseWindow();
 
-		return 0;
-	}
+	CloseWindow();
+
+	return 0;
+}
 
 
-void UpdateGame(int& orientation){
+void UpdateGame(int& orientation) {
+
+
 	// Get the render time
 	float deltaTime = GetFrameTime();
 #pragma region movement
