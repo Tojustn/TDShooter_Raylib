@@ -5,7 +5,6 @@ class Spritesheet {
 public:
     Image spritesheet;
     Texture texture;
-    bool textureLoaded = false;
 
     Spritesheet(Image sheet) {
         if (sheet.data == nullptr) {
@@ -16,12 +15,10 @@ public:
             std::cout << "Valid Image" << std::endl;
         }
         spritesheet = sheet;           
-        textureLoaded = false;
-        // Can't load the texture here because of some nullptr issue
+        texture = LoadTextureFromImage(spritesheet);
 
     }
 
-    void loadTexture();
 	Image getSprite(Rectangle);
 	void drawSprite(Vector2, Rectangle, int, bool);
 	~Spritesheet();

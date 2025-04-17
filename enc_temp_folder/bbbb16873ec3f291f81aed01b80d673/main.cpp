@@ -103,7 +103,6 @@ int main(void)
 		// Get the angle in radians of the mouse to the middle of screen 
 		float mouseAngle = atan2(mouseDirection.y, mouseDirection.x);
 		// No need to make negative since raylib has positive 90 facing down
-		// Place gun around the player using formula xcos(x) ysin(y)
 		DrawTexturePro(spriteWeaponText, { 12,8,27,16 }, { data.playerPosition.x +  cos(mouseAngle ) * 64, 
 			data.playerPosition.y + sin(mouseAngle)*64, 27 * 3,16 * 3 }, { 13.5,8 }, mouseAngle* RAD2DEG, WHITE);
 	
