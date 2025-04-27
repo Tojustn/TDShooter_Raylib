@@ -1,6 +1,7 @@
 #include <raylib.h>
 #include "raymath.h"
 #include <iostream>
+#include <vector>
 
 #pragma region imgui
 #include "imgui.h"
@@ -11,10 +12,14 @@
 #pragma region GameLayer
 #include <GameLayer/tiledRenderer.h>
 #include <GameLayer/spritesheet.h>
+#include <GameLayer/bullet.h>
 #pragma endregion
 
 struct GameplayData {
 	Vector2 playerPosition = { 100,100 };
+
+	std::vector<Bullet> bullets;
+
 };
 
 TiledRenderer tiledRenderer;
@@ -23,7 +28,7 @@ GameplayData data;
 
 constexpr int screenWidth = 1200;
 constexpr int screenHeight = 1200;
-void UpdateGame(int&);
+void UpdatePlayer(int&,float);
 
 
 int main(void)
@@ -41,13 +46,17 @@ int main(void)
 	Image spriteBundle = LoadImage(RESOURCES_PATH "/walk.png");
 	Spritesheet walkSprite(spriteBundle);
 
-	Image spriteWeapon{ LoadImage(RESOURCES_PATH "/Gun.png") };
+	Image spriteWeapon{ LoadImage(RESOURCES_PATH "Gun.png") };
 	Texture spriteWeaponText{ LoadTextureFromImage(spriteWeapon) };
 
 #pragma endregion 
 
 
-	Texture cursorTexture{ LoadTexture(RESOURCES_PATH "/cursor.png") };
+#pragma region bullet
+	Texture bulletTexture{ LoadTexture(RESOURCES_PATH "bullet.png") };
+
+#pragma endregion
+	Texture cursorTexture{ LoadTexture(RESOURCES_PATH "cursor.png") };
 	HideCursor();
 #pragma region camera 
 	Camera2D camera{ 0 };
@@ -57,16 +66,16 @@ int main(void)
 	Vector2 mousePosition{ 0,0 };
 	Vector2 screenCenter{ screenWidth / 2.f, screenHeight / 2.f };
 #pragma region textureBG
-	tiledRenderer.texture = LoadTexture(RESOURCES_PATH "/TD_Shooter_BG.png");
+	tiledRenderer.texture = LoadTexture(RESOURCES_PATH "TD_Shooter_BG.png");
 #pragma endregion	
 	while (!WindowShouldClose())
 	{
 
 		BeginDrawing();
-
+		float deltaTime = GetFrameTime();
 		ClearBackground(BLACK);
 		BeginMode2D(camera);
-		UpdateGame(orientation);
+		UpdatePlayer(orientation,deltaTime);
 
 
 		tiledRenderer.draw(camera);
@@ -91,8 +100,8 @@ int main(void)
 
 #pragma region mousePos
 
-		mousePosition =  GetMousePosition() ;
-	
+		mousePosition = GetMousePosition();
+
 		Vector2 mouseDirection{ Vector2Subtract(mousePosition,  screenCenter) };
 		if (Vector2Length(mouseDirection) == 0.f) {
 			mouseDirection = { 1,0 };
@@ -104,10 +113,30 @@ int main(void)
 		float mouseAngle = atan2(mouseDirection.y, mouseDirection.x);
 		// No need to make negative since raylib has positive 90 facing down
 		// Place gun around the player using formula xcos(x) ysin(y)
-		DrawTexturePro(spriteWeaponText, { 12,8,27,16 }, { data.playerPosition.x +  cos(mouseAngle ) * 64, 
-			data.playerPosition.y + sin(mouseAngle)*64, 27 * 3,16 * 3 }, { 13.5,8 }, mouseAngle* RAD2DEG, WHITE);
-	
+		DrawTexturePro(spriteWeaponText, { 12,8,27,16 }, { data.playerPosition.x + cos(mouseAngle) * 64,
+			data.playerPosition.y + sin(mouseAngle) * 64, 27 * 3,16 * 3 }, { 13.5,8 }, mouseAngle * RAD2DEG, WHITE);
 
+
+#pragma endregion
+
+
+
+#pragma region handle bullets
+		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+			Bullet b;
+
+			b.position = data.playerPosition;
+			//Normalize vector, getting the mouse position
+			b.fireDirection = mouseDirection;
+			b.orientation = mouseAngle * RAD2DEG;
+
+			data.bullets.push_back(b);
+		}
+		for (int i = 0;i < data.bullets.size(); i++) {
+
+			data.bullets[i].draw(bulletTexture);
+			data.bullets[i].update(deltaTime);
+		}
 #pragma endregion
 		EndMode2D();
 		DrawTexture(cursorTexture, GetMouseX() - 16, GetMouseY() - 16, WHITE);
@@ -121,11 +150,9 @@ int main(void)
 }
 
 
-void UpdateGame(int& orientation) {
-
-
+void UpdatePlayer(int& orientation, float deltaTime) {
 	// Get the render time
-	float deltaTime = GetFrameTime();
+
 #pragma region movement
 
 	Vector2 move = {};

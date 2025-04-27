@@ -8,14 +8,14 @@ Image Spritesheet::getSprite(Rectangle spriteRectangle) {
 }
 void Spritesheet::drawSprite(Vector2 position, Rectangle spriteRectangle, int frame, bool flipped) {
     // Scale it up to yxy pixels
-    Rectangle dest = { position.x, position.y, 128, 128 };
+    Rectangle dest = { position.x, position.y, 16*6, 16*6 };
 
     if (flipped) {
         // Make width negative to flip
         spriteRectangle.width = -spriteRectangle.width;
     }
 
-        DrawTexturePro(texture, spriteRectangle, dest, { 64,64 }, 0.0f, WHITE);
+        DrawTexturePro(texture, spriteRectangle, dest, { 16*3,16*3 }, 0.0f, WHITE);
 }
 
 Spritesheet::~Spritesheet() {

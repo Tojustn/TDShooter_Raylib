@@ -3613,11 +3613,18 @@ Texture2D LoadTextureFromImage(Image image)
 {
     Texture2D texture = { 0 };
 
-    if ((image.width != 0) && (image.height != 0))
-    {
+    if (image.data == NULL) {
+        TRACELOG(LOG_ERROR, "IMAGE: Data is null, cannot load texture");
+        return texture;
+    }
+
+    if ((image.width != 0) && (image.height != 0)) {
+        TRACELOG(LOG_INFO, "Loading texture with width: %d, height: %d", image.width, image.height);
         texture.id = rlLoadTexture(image.data, image.width, image.height, image.format, image.mipmaps);
     }
-    else TRACELOG(LOG_WARNING, "IMAGE: Data is not valid to load texture");
+    else {
+        TRACELOG(LOG_WARNING, "IMAGE: Data is not valid to load texture");
+    }
 
     texture.width = image.width;
     texture.height = image.height;
