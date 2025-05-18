@@ -12,13 +12,20 @@
 #pragma region GameLayer
 #include <GameLayer/tiledRenderer.h>
 #include <GameLayer/spritesheet.h>
+#include <GameLayer/character.h>
+#include <GameLayer/enemy.h>
 #include <GameLayer/bullet.h>
 #pragma endregion
 
 struct GameplayData {
+	float spawnTimer = 0.0f;
+	float spawnInterval = 10.0f;
+
 	Vector2 playerPosition = { 100,100 };
 
 	std::vector<Bullet> bullets;
+
+	std::vector<Enemy> enemys;
 
 };
 
@@ -28,13 +35,14 @@ GameplayData data;
 
 constexpr int screenWidth = 1200;
 constexpr int screenHeight = 1200;
-void UpdatePlayer(int&,float);
+void UpdatePlayer(int&, float);
 
 
 int main(void)
 {
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 	InitWindow(screenWidth, screenHeight, "TD Shooter");
+	double elaspedTime = GetTime();
 	SetTargetFPS(60);
 
 #pragma region spriteTexture 
@@ -49,8 +57,16 @@ int main(void)
 	Image spriteWeapon{ LoadImage(RESOURCES_PATH "Gun.png") };
 	Texture spriteWeaponText{ LoadTextureFromImage(spriteWeapon) };
 
+
+
+
 #pragma endregion 
 
+#pragma region enemyTexture
+	Image enemyBundle = LoadImage(RESOURCES_PATH "goblin_walk.png");
+	Spritesheet enemySheet(enemyBundle);
+
+#pragma endregion
 
 #pragma region bullet
 	Texture bulletTexture{ LoadTexture(RESOURCES_PATH "bullet.png") };
@@ -75,7 +91,7 @@ int main(void)
 		float deltaTime = GetFrameTime();
 		ClearBackground(BLACK);
 		BeginMode2D(camera);
-		UpdatePlayer(orientation,deltaTime);
+		UpdatePlayer(orientation, deltaTime);
 
 
 		tiledRenderer.draw(camera);
@@ -125,7 +141,11 @@ int main(void)
 		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
 			Bullet b;
 
-			b.position = data.playerPosition;
+			b.position = {
+		data.playerPosition.x + cos(mouseAngle) * (64 + 80),
+		data.playerPosition.y + sin(mouseAngle) * (64 + 80)
+			};
+
 			//Normalize vector, getting the mouse position
 			b.fireDirection = mouseDirection;
 			b.orientation = mouseAngle * RAD2DEG;
@@ -137,6 +157,25 @@ int main(void)
 			data.bullets[i].draw(bulletTexture);
 			data.bullets[i].update(deltaTime);
 		}
+#pragma endregion
+
+#pragma region handle enemies
+		// Spawn enemies every 10 seconds
+		std::cout << data.spawnTimer;
+		data.spawnTimer += deltaTime;
+		if (data.spawnTimer >= data.spawnInterval) {
+			Rectangle enemyRect{ 39,24,18,15 };
+			Enemy e = Enemy(data.playerPosition, &enemySheet, enemyRect);
+			data.enemys.push_back(e);
+			data.spawnTimer = 0;
+		}
+		for (int i = 0; i < data.enemys.size(); i++) {
+			data.enemys[i].draw();
+			data.enemys[i].update(deltaTime);
+		}
+
+
+
 #pragma endregion
 		EndMode2D();
 		DrawTexture(cursorTexture, GetMouseX() - 16, GetMouseY() - 16, WHITE);
