@@ -18,7 +18,7 @@
 #pragma endregion
 
 struct GameplayData {
-	float spawnTimer = 0.0f;
+	float spawnTimer = 10.0f;
 	float spawnInterval = 10.0f;
 
 	Vector2 playerPosition = { 100,100 };
@@ -161,9 +161,9 @@ int main(void)
 
 #pragma region handle enemies
 		// Spawn enemies every 10 seconds
-		std::cout << data.spawnTimer;
 		data.spawnTimer += deltaTime;
 		if (data.spawnTimer >= data.spawnInterval) {
+			std::cout << "Enemy spawned";
 			Rectangle enemyRect{ 39,24,18,15 };
 			Enemy e = Enemy(data.playerPosition, &enemySheet, enemyRect);
 			data.enemys.push_back(e);
@@ -171,7 +171,7 @@ int main(void)
 		}
 		for (int i = 0; i < data.enemys.size(); i++) {
 			data.enemys[i].draw();
-			data.enemys[i].update(deltaTime);
+			data.enemys[i].update(deltaTime, data.playerPosition);
 		}
 
 

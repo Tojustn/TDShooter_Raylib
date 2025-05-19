@@ -6,7 +6,7 @@ class Character {
 public:
 	Vector2 position;
 	int health = 100;
-	float speed = 400;
+	float speed = 200;
 	Spritesheet* sheet;
 	Rectangle charRectangle;
 	Character();
