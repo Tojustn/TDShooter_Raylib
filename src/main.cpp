@@ -63,6 +63,7 @@ int main(void)
 #pragma endregion 
 
 #pragma region enemyTexture
+	Rectangle enemyRect{ 39,24,18,15 };
 	Image enemyBundle = LoadImage(RESOURCES_PATH "goblin_walk.png");
 	Spritesheet enemySheet(enemyBundle);
 
@@ -142,9 +143,8 @@ int main(void)
 			Bullet b;
 
 			b.position = {
-		data.playerPosition.x + cos(mouseAngle) * (64 + 80),
-		data.playerPosition.y + sin(mouseAngle) * (64 + 80)
-			};
+		data.playerPosition.x + cos(mouseAngle) ,
+		data.playerPosition.y + sin(mouseAngle)			};
 
 			//Normalize vector, getting the mouse position
 			b.fireDirection = mouseDirection;
@@ -162,10 +162,16 @@ int main(void)
 #pragma region handle enemies
 		// Spawn enemies every 10 seconds
 		data.spawnTimer += deltaTime;
+		Vector2 topLeft = GetScreenToWorld2D({ 0, 0 }, camera);
+		// Need to find what tile player is on
+		int tileX = static_cast<int>(floor(data.playerPosition.x/1200));
+		int tileY = static_cast<int>(floor(data.playerPosition.y / 1200));
 		if (data.spawnTimer >= data.spawnInterval) {
-			std::cout << "Enemy spawned";
-			Rectangle enemyRect{ 39,24,18,15 };
-			Enemy e = Enemy(data.playerPosition, &enemySheet, enemyRect);
+		
+			float randomX = GetRandomValue(-600, 600) + tileX + enemyRect.width;
+			float randomY = GetRandomValue(-600, 600) +  tileY + enemyRect.height;
+			std::cout << "Enemy spawned at " << randomX << randomY;
+			Enemy e = Enemy({randomX, randomY}, &enemySheet, enemyRect);
 			data.enemys.push_back(e);
 			data.spawnTimer = 0;
 		}

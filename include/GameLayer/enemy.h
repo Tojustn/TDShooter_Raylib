@@ -10,5 +10,4 @@ public:
 	}
 	void update(float) override;
 	void update(float, Vector2);
-	void MoveEnemy(float, Vector2);
 };

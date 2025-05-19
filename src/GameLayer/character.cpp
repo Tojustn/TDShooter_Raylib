@@ -3,6 +3,6 @@
 
 void Character::draw() {
 	// call draw from spritesheet class
-	sheet->drawSprite(position, charRectangle,1,false);
+	sheet->drawSprite(position, charRectangle,1,flipped);
 }
 void Character::update(float deltaTime) {}

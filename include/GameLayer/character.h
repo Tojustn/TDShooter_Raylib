@@ -5,8 +5,9 @@
 class Character {
 public:
 	Vector2 position;
-	int health = 100;
-	float speed = 200;
+	bool flipped = false;
+	int health = 2;
+	float speed = 600;
 	Spritesheet* sheet;
 	Rectangle charRectangle;
 	Character();
