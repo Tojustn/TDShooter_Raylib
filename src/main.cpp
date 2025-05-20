@@ -15,14 +15,18 @@
 #include <GameLayer/character.h>
 #include <GameLayer/enemy.h>
 #include <GameLayer/bullet.h>
+#include <GameLayer/healthbar.h>
 #pragma endregion
 
 struct GameplayData {
+	enum Gameplay {PLAYING, GAMEOVER};
+	Gameplay state = PLAYING;
 	float spawnTimer = 10.0f;
 	float spawnInterval = 10.0f;
 
 	Vector2 playerPosition = { 100,100 };
-
+	const int maxHealth = 3;
+	int health = 3;
 	std::vector<Bullet> bullets;
 
 	std::vector<Enemy> enemys;
@@ -40,10 +44,22 @@ void UpdatePlayer(int&, float);
 
 int main(void)
 {
+	Vector2 mousePosition{ 0,0 };
+	Vector2 screenCenter{ screenWidth / 2.f, screenHeight / 2.f };
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 	InitWindow(screenWidth, screenHeight, "TD Shooter");
 	double elaspedTime = GetTime();
 	SetTargetFPS(60);
+
+#pragma region healthbar
+	Image emptybar{ LoadImage(RESOURCES_PATH "empty_bar.png") };
+	Image fullbar{ LoadImage(RESOURCES_PATH "full_health_bar.png") };
+	Texture emptyBarText{ LoadTextureFromImage(emptybar) };
+	Texture fullBarText{ LoadTextureFromImage(fullbar) };
+	UnloadImage(emptybar);
+	UnloadImage(fullbar);
+	HealthBar healthbar(emptyBarText,fullBarText);
+#pragma endregion
 
 #pragma region spriteTexture 
 	// Load the sprite sheet image
@@ -58,9 +74,8 @@ int main(void)
 	Texture spriteWeaponText{ LoadTextureFromImage(spriteWeapon) };
 
 
-
-
 #pragma endregion 
+
 
 #pragma region enemyTexture
 	Rectangle enemyRect{ 39,24,18,15 };
@@ -80,8 +95,7 @@ int main(void)
 	camera.offset = { screenWidth / 2, screenHeight / 2 };
 	camera.zoom = 1.0f;
 #pragma endregion
-	Vector2 mousePosition{ 0,0 };
-	Vector2 screenCenter{ screenWidth / 2.f, screenHeight / 2.f };
+
 #pragma region textureBG
 	tiledRenderer.texture = LoadTexture(RESOURCES_PATH "TD_Shooter_BG.png");
 #pragma endregion	
@@ -95,9 +109,10 @@ int main(void)
 		UpdatePlayer(orientation, deltaTime);
 
 
-		tiledRenderer.draw(camera);
-
 		camera.target = data.playerPosition;
+		tiledRenderer.draw(camera);
+	
+		Rectangle userRect = { data.playerPosition.x, data.playerPosition.y, static_cast<float>(walkSprite.texture.width), static_cast<float>(walkSprite.texture.height) };
 		if (orientation == 0) {
 			walkSprite.drawSprite(data.playerPosition, { 32,32,spriteWidth,spriteHeight }, 0, false);
 		}
@@ -130,8 +145,8 @@ int main(void)
 		float mouseAngle = atan2(mouseDirection.y, mouseDirection.x);
 		// No need to make negative since raylib has positive 90 facing down
 		// Place gun around the player using formula xcos(x) ysin(y)
-		DrawTexturePro(spriteWeaponText, { 12,8,27,16 }, { data.playerPosition.x + cos(mouseAngle) * 64,
-			data.playerPosition.y + sin(mouseAngle) * 64, 27 * 3,16 * 3 }, { 13.5,8 }, mouseAngle * RAD2DEG, WHITE);
+		DrawTexturePro(spriteWeaponText, { 12,8,27,16 }, { data.playerPosition.x + cos(mouseAngle) * 32,
+			data.playerPosition.y + sin(mouseAngle) * 32, 27 * 3,16 * 3 }, { 13.5,8 }, mouseAngle * RAD2DEG, WHITE);
 
 
 #pragma endregion
@@ -154,8 +169,14 @@ int main(void)
 			data.spawnTimer = 0;
 		}
 		for (int i = 0; i < data.enemys.size(); i++) {
+			
+			Rectangle enemyColRect = { data.enemys[i].position.x, 	data.enemys[i].position.y, enemyRect.width, enemyRect.height };
 			data.enemys[i].draw();
 			data.enemys[i].update(deltaTime, data.playerPosition);
+
+			if (CheckCollisionRecs(userRect, enemyColRect)) {
+				data.health -= 1;
+			}
 		}
 
 
@@ -201,6 +222,10 @@ int main(void)
 #pragma endregion
 
 		EndMode2D();
+
+
+		// Draw UI stuff in screen space after camera ends
+		healthbar.draw(data.health);
 		DrawTexture(cursorTexture, GetMouseX() - 16, GetMouseY() - 16, WHITE);
 		EndDrawing();
 	}
