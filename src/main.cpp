@@ -137,6 +137,30 @@ int main(void)
 #pragma endregion
 
 
+#pragma region handle enemies
+		// Spawn enemies every 10 seconds
+		data.spawnTimer += deltaTime;
+		Vector2 topLeft = GetScreenToWorld2D({ 0, 0 }, camera);
+		// Need to find what tile player is on
+		int tileX = static_cast<int>(floor(data.playerPosition.x / 1200));
+		int tileY = static_cast<int>(floor(data.playerPosition.y / 1200));
+		if (data.spawnTimer >= data.spawnInterval) {
+
+			float randomX = GetRandomValue(-600, 600) + tileX + enemyRect.width;
+			float randomY = GetRandomValue(-600, 600) + tileY + enemyRect.height;
+			std::cout << "Enemy spawned at " << randomX << randomY;
+			Enemy e = Enemy({ randomX, randomY }, &enemySheet, enemyRect);
+			data.enemys.push_back(e);
+			data.spawnTimer = 0;
+		}
+		for (int i = 0; i < data.enemys.size(); i++) {
+			data.enemys[i].draw();
+			data.enemys[i].update(deltaTime, data.playerPosition);
+		}
+
+
+
+#pragma endregion
 
 #pragma region handle bullets
 		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
@@ -152,37 +176,30 @@ int main(void)
 
 			data.bullets.push_back(b);
 		}
-		for (int i = 0;i < data.bullets.size(); i++) {
+		for (int i = 0; i < data.bullets.size(); i++) {
+			Bullet& bullet = data.bullets[i];
+			bullet.draw(bulletTexture);
+			bullet.update(deltaTime);
 
-			data.bullets[i].draw(bulletTexture);
-			data.bullets[i].update(deltaTime);
+			for (int j = 0; j < data.enemys.size(); j++) {
+				Enemy& enemy = data.enemys[j];
+
+				Rectangle bulletRect = { bullet.position.x, bullet.position.y, 32,24};
+				Rectangle enemyColRect = { enemy.position.x, enemy.position.y, enemyRect.width, enemyRect.height };
+
+				if (CheckCollisionRecs(bulletRect, enemyColRect)){
+
+					data.enemys.erase(data.enemys.begin() + j);
+					j--; 
+					data.bullets.erase(data.bullets.begin() + i);
+					i--; 				
+					break;  			
+				}
+			}
 		}
+
 #pragma endregion
 
-#pragma region handle enemies
-		// Spawn enemies every 10 seconds
-		data.spawnTimer += deltaTime;
-		Vector2 topLeft = GetScreenToWorld2D({ 0, 0 }, camera);
-		// Need to find what tile player is on
-		int tileX = static_cast<int>(floor(data.playerPosition.x/1200));
-		int tileY = static_cast<int>(floor(data.playerPosition.y / 1200));
-		if (data.spawnTimer >= data.spawnInterval) {
-		
-			float randomX = GetRandomValue(-600, 600) + tileX + enemyRect.width;
-			float randomY = GetRandomValue(-600, 600) +  tileY + enemyRect.height;
-			std::cout << "Enemy spawned at " << randomX << randomY;
-			Enemy e = Enemy({randomX, randomY}, &enemySheet, enemyRect);
-			data.enemys.push_back(e);
-			data.spawnTimer = 0;
-		}
-		for (int i = 0; i < data.enemys.size(); i++) {
-			data.enemys[i].draw();
-			data.enemys[i].update(deltaTime, data.playerPosition);
-		}
-
-
-
-#pragma endregion
 		EndMode2D();
 		DrawTexture(cursorTexture, GetMouseX() - 16, GetMouseY() - 16, WHITE);
 		EndDrawing();

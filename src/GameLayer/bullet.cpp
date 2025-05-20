@@ -3,7 +3,7 @@
 #include "raymath.h"
 
 void Bullet::draw(Texture& texture) {
-	DrawTextureEx(texture, position, orientation, .8, WHITE);
+	DrawTextureEx(texture, position, orientation, 1, WHITE);
 }
 
 void Bullet::update(float deltaTime) {
