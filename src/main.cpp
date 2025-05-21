@@ -58,7 +58,7 @@ int main(void)
 	Texture fullBarText{ LoadTextureFromImage(fullbar) };
 	UnloadImage(emptybar);
 	UnloadImage(fullbar);
-	HealthBar healthbar(emptyBarText,fullBarText);
+	HealthBar healthbar(emptyBarText, fullBarText);
 #pragma endregion
 
 #pragma region spriteTexture 
@@ -111,8 +111,10 @@ int main(void)
 
 		camera.target = data.playerPosition;
 		tiledRenderer.draw(camera);
-	
-		Rectangle userRect = { data.playerPosition.x, data.playerPosition.y, static_cast<float>(walkSprite.texture.width), static_cast<float>(walkSprite.texture.height) };
+
+		Rectangle userRect = { data.playerPosition.x - 16 * 6 / 2,
+	data.playerPosition.y - 16 * 6 / 2,16*6, 16*6};
+		// DrawRectangle(userRect.x, userRect.y, userRect.width, userRect.height, RED);
 		if (orientation == 0) {
 			walkSprite.drawSprite(data.playerPosition, { 32,32,spriteWidth,spriteHeight }, 0, false);
 		}
@@ -169,72 +171,83 @@ int main(void)
 			data.spawnTimer = 0;
 		}
 		for (int i = 0; i < data.enemys.size(); i++) {
-			
-			Rectangle enemyColRect = { data.enemys[i].position.x, 	data.enemys[i].position.y, enemyRect.width, enemyRect.height };
-			data.enemys[i].draw();
-			data.enemys[i].update(deltaTime, data.playerPosition);
+			Enemy& enemy = data.enemys[i];
+			Rectangle enemyColRect = {
+				enemy.position.x,
+				enemy.position.y,
+				enemyRect.width,
+				enemyRect.height
+			};
+
+			enemy.draw();
+
 
 			if (CheckCollisionRecs(userRect, enemyColRect)) {
 				data.health -= 1;
+				enemy.update(deltaTime, data.playerPosition, true);
+			}
+			else {
+				enemy.update(deltaTime, data.playerPosition, false);
 			}
 		}
+
 
 
 
 #pragma endregion
 
 #pragma region handle bullets
-		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-			Bullet b;
+			if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+				Bullet b;
 
-			b.position = {
-		data.playerPosition.x + cos(mouseAngle) ,
-		data.playerPosition.y + sin(mouseAngle)			};
+				b.position = {
+			data.playerPosition.x + cos(mouseAngle) ,
+			data.playerPosition.y + sin(mouseAngle) };
 
-			//Normalize vector, getting the mouse position
-			b.fireDirection = mouseDirection;
-			b.orientation = mouseAngle * RAD2DEG;
+				//Normalize vector, getting the mouse position
+				b.fireDirection = mouseDirection;
+				b.orientation = mouseAngle * RAD2DEG;
 
-			data.bullets.push_back(b);
-		}
-		for (int i = 0; i < data.bullets.size(); i++) {
-			Bullet& bullet = data.bullets[i];
-			bullet.draw(bulletTexture);
-			bullet.update(deltaTime);
+				data.bullets.push_back(b);
+			}
+			for (int i = 0; i < data.bullets.size(); i++) {
+				Bullet& bullet = data.bullets[i];
+				bullet.draw(bulletTexture);
+				bullet.update(deltaTime);
 
-			for (int j = 0; j < data.enemys.size(); j++) {
-				Enemy& enemy = data.enemys[j];
+				for (int j = 0; j < data.enemys.size(); j++) {
+					Enemy& enemy = data.enemys[j];
 
-				Rectangle bulletRect = { bullet.position.x, bullet.position.y, 32,24};
-				Rectangle enemyColRect = { enemy.position.x, enemy.position.y, enemyRect.width, enemyRect.height };
+					Rectangle bulletRect = { bullet.position.x, bullet.position.y, 32,24 };
+					Rectangle enemyColRect = { enemy.position.x, enemy.position.y, enemyRect.width, enemyRect.height };
 
-				if (CheckCollisionRecs(bulletRect, enemyColRect)){
+					if (CheckCollisionRecs(bulletRect, enemyColRect)) {
 
-					data.enemys.erase(data.enemys.begin() + j);
-					j--; 
-					data.bullets.erase(data.bullets.begin() + i);
-					i--; 				
-					break;  			
+						data.enemys.erase(data.enemys.begin() + j);
+						j--;
+						data.bullets.erase(data.bullets.begin() + i);
+						i--;
+						break;
+					}
 				}
 			}
-		}
 
 #pragma endregion
 
-		EndMode2D();
+			EndMode2D();
 
 
-		// Draw UI stuff in screen space after camera ends
-		healthbar.draw(data.health);
-		DrawTexture(cursorTexture, GetMouseX() - 16, GetMouseY() - 16, WHITE);
-		EndDrawing();
+			// Draw UI stuff in screen space after camera ends
+			healthbar.draw(data.health);
+			DrawTexture(cursorTexture, GetMouseX() - 16, GetMouseY() - 16, WHITE);
+			EndDrawing();
+		}
+
+
+		CloseWindow();
+
+		return 0;
 	}
-
-
-	CloseWindow();
-
-	return 0;
-}
 
 
 void UpdatePlayer(int& orientation, float deltaTime) {

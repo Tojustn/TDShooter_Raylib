@@ -8,6 +8,7 @@ public:
 		: Character(startPosition, spritesheet, enemyRect) {
 
 	}
+	Vector2 knockback{ 0,0 };
 	void update(float) override;
-	void update(float, Vector2);
+	void update(float, Vector2, bool);
 };
