@@ -23,6 +23,6 @@ public:
 	}
 
 	Image getSprite(Rectangle);
-	void drawSprite(Vector2, Rectangle, int, bool);
+	void drawSprite(Vector2, Rectangle, bool);
 	~Spritesheet();
 };

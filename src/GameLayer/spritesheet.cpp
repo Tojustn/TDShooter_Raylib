@@ -6,7 +6,7 @@ Image Spritesheet::getSprite(Rectangle spriteRectangle) {
     Image sprite = ImageFromImage(spritesheet, spriteRectangle);
     return sprite;
 }
-void Spritesheet::drawSprite(Vector2 position, Rectangle spriteRectangle, int frame, bool flipped) {
+void Spritesheet::drawSprite(Vector2 position, Rectangle spriteRectangle,bool flipped) {
     // Scale it up to yxy pixels
     Rectangle dest = { position.x, position.y, 16*6, 16*6 };
 

@@ -144,19 +144,19 @@ int main(void)
 		data.playerPosition.y - 16 * 6 / 2,16 * 6, 16 * 6 };
 			// DrawRectangle(userRect.x, userRect.y, userRect.width, userRect.height, RED);
 			if (orientation == 0) {
-				walkSprite.drawSprite(data.playerPosition, { 32,32,spriteWidth,spriteHeight }, 0, false);
+				walkSprite.drawSprite(data.playerPosition, { 32,32,spriteWidth,spriteHeight },false);
 			}
 			else if (orientation == 1) {
 
-				walkSprite.drawSprite(data.playerPosition, { 32,112,spriteWidth,spriteHeight }, 0, false);
+				walkSprite.drawSprite(data.playerPosition, { 32,112,spriteWidth,spriteHeight },false);
 			}
 			else if (orientation == 2) {
 
-				walkSprite.drawSprite(data.playerPosition, { 32,192,spriteWidth,spriteHeight }, 0, false);
+				walkSprite.drawSprite(data.playerPosition, { 32,192,spriteWidth,spriteHeight }, false);
 			}
 			else if (orientation == 3) {
 
-				walkSprite.drawSprite(data.playerPosition, { 32,32,spriteWidth,spriteHeight }, 0, true);
+				walkSprite.drawSprite(data.playerPosition, { 32,32,spriteWidth,spriteHeight }, true);
 			}
 
 
