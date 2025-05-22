@@ -18,9 +18,9 @@
 #include <GameLayer/healthbar.h>
 #pragma endregion
 
+const enum Gameplay { STARTING, PLAYING, GAMEOVER };
 struct GameplayData {
-	enum Gameplay {PLAYING, GAMEOVER};
-	Gameplay state = PLAYING;
+	Gameplay state = STARTING;
 	float spawnTimer = 10.0f;
 	float spawnInterval = 10.0f;
 
@@ -103,93 +103,124 @@ int main(void)
 	{
 
 		BeginDrawing();
-		float deltaTime = GetFrameTime();
-		ClearBackground(BLACK);
-		BeginMode2D(camera);
-		UpdatePlayer(orientation, deltaTime);
+		if (data.state == STARTING) {
+
+			int fontSize = 100;
+			// Strings are stored as  char* pointer to the first element
+			const char* welcomeText = "WELCOME";
+			int textWidth = MeasureText(welcomeText, fontSize);
+			int centerX = screenWidth / 2 - textWidth / 2;
+
+			ClearBackground(GREEN);
+			DrawText(welcomeText, centerX, 200, 100, DARKGREEN);
 
 
-		camera.target = data.playerPosition;
-		tiledRenderer.draw(camera);
+			Rectangle startRec = { 300,700,600,200 };
 
-		Rectangle userRect = { data.playerPosition.x - 16 * 6 / 2,
-	data.playerPosition.y - 16 * 6 / 2,16*6, 16*6};
-		// DrawRectangle(userRect.x, userRect.y, userRect.width, userRect.height, RED);
-		if (orientation == 0) {
-			walkSprite.drawSprite(data.playerPosition, { 32,32,spriteWidth,spriteHeight }, 0, false);
+			DrawRectangleRec(startRec, DARKGREEN);
+
+			const char* startText = "START";
+			textWidth = MeasureText(startText, fontSize);
+			centerX = screenWidth / 2 - textWidth / 2;
+			DrawText(startText, centerX, 750, 100, GREEN);
+
+			Vector2 mousePosition = GetMousePosition();
+			if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePosition, startRec)) {
+				data.state = PLAYING;
+			}
+			DrawTexture(cursorTexture, GetMouseX() - 16, GetMouseY() - 16, WHITE);
 		}
-		else if (orientation == 1) {
+		else if (data.state == PLAYING) {
+			float deltaTime = GetFrameTime();
+			ClearBackground(BLACK);
+			BeginMode2D(camera);
+			UpdatePlayer(orientation, deltaTime);
 
-			walkSprite.drawSprite(data.playerPosition, { 32,112,spriteWidth,spriteHeight }, 0, false);
-		}
-		else if (orientation == 2) {
 
-			walkSprite.drawSprite(data.playerPosition, { 32,192,spriteWidth,spriteHeight }, 0, false);
-		}
-		else if (orientation == 3) {
+			camera.target = data.playerPosition;
+			tiledRenderer.draw(camera);
 
-			walkSprite.drawSprite(data.playerPosition, { 32,32,spriteWidth,spriteHeight }, 0, true);
-		}
+			Rectangle userRect = { data.playerPosition.x - 16 * 6 / 2,
+		data.playerPosition.y - 16 * 6 / 2,16 * 6, 16 * 6 };
+			// DrawRectangle(userRect.x, userRect.y, userRect.width, userRect.height, RED);
+			if (orientation == 0) {
+				walkSprite.drawSprite(data.playerPosition, { 32,32,spriteWidth,spriteHeight }, 0, false);
+			}
+			else if (orientation == 1) {
+
+				walkSprite.drawSprite(data.playerPosition, { 32,112,spriteWidth,spriteHeight }, 0, false);
+			}
+			else if (orientation == 2) {
+
+				walkSprite.drawSprite(data.playerPosition, { 32,192,spriteWidth,spriteHeight }, 0, false);
+			}
+			else if (orientation == 3) {
+
+				walkSprite.drawSprite(data.playerPosition, { 32,32,spriteWidth,spriteHeight }, 0, true);
+			}
 
 
 #pragma region mousePos
 
-		mousePosition = GetMousePosition();
+			mousePosition = GetMousePosition();
 
-		Vector2 mouseDirection{ Vector2Subtract(mousePosition,  screenCenter) };
-		if (Vector2Length(mouseDirection) == 0.f) {
-			mouseDirection = { 1,0 };
-		}
-		else {
-			mouseDirection = Vector2Normalize(mouseDirection);
-		}
-		// Get the angle in radians of the mouse to the middle of screen 
-		float mouseAngle = atan2(mouseDirection.y, mouseDirection.x);
-		// No need to make negative since raylib has positive 90 facing down
-		// Place gun around the player using formula xcos(x) ysin(y)
-		DrawTexturePro(spriteWeaponText, { 12,8,27,16 }, { data.playerPosition.x + cos(mouseAngle) * 32,
-			data.playerPosition.y + sin(mouseAngle) * 32, 27 * 3,16 * 3 }, { 13.5,8 }, mouseAngle * RAD2DEG, WHITE);
+			Vector2 mouseDirection{ Vector2Subtract(mousePosition,  screenCenter) };
+			if (Vector2Length(mouseDirection) == 0.f) {
+				mouseDirection = { 1,0 };
+			}
+			else {
+				mouseDirection = Vector2Normalize(mouseDirection);
+			}
+			// Get the angle in radians of the mouse to the middle of screen 
+			float mouseAngle = atan2(mouseDirection.y, mouseDirection.x);
+			// No need to make negative since raylib has positive 90 facing down
+			// Place gun around the player using formula xcos(x) ysin(y)
+			DrawTexturePro(spriteWeaponText, { 12,8,27,16 }, { data.playerPosition.x + cos(mouseAngle) * 32,
+				data.playerPosition.y + sin(mouseAngle) * 32, 27 * 3,16 * 3 }, { 13.5,8 }, mouseAngle * RAD2DEG, WHITE);
 
 
 #pragma endregion
 
 
 #pragma region handle enemies
-		// Spawn enemies every 10 seconds
-		data.spawnTimer += deltaTime;
-		Vector2 topLeft = GetScreenToWorld2D({ 0, 0 }, camera);
-		// Need to find what tile player is on
-		int tileX = static_cast<int>(floor(data.playerPosition.x / 1200));
-		int tileY = static_cast<int>(floor(data.playerPosition.y / 1200));
-		if (data.spawnTimer >= data.spawnInterval) {
+			// Spawn enemies every 10 seconds
+			data.spawnTimer += deltaTime;
+			Vector2 topLeft = GetScreenToWorld2D({ 0, 0 }, camera);
+			// Need to find what tile player is on
+			int tileX = static_cast<int>(floor(data.playerPosition.x / 1200));
+			int tileY = static_cast<int>(floor(data.playerPosition.y / 1200));
+			if (data.spawnTimer >= data.spawnInterval) {
 
-			float randomX = GetRandomValue(-600, 600) + tileX + enemyRect.width;
-			float randomY = GetRandomValue(-600, 600) + tileY + enemyRect.height;
-			std::cout << "Enemy spawned at " << randomX << randomY;
-			Enemy e = Enemy({ randomX, randomY }, &enemySheet, enemyRect);
-			data.enemys.push_back(e);
-			data.spawnTimer = 0;
-		}
-		for (int i = 0; i < data.enemys.size(); i++) {
-			Enemy& enemy = data.enemys[i];
-			Rectangle enemyColRect = {
-				enemy.position.x,
-				enemy.position.y,
-				enemyRect.width,
-				enemyRect.height
-			};
-
-			enemy.draw();
-
-
-			if (CheckCollisionRecs(userRect, enemyColRect)) {
-				data.health -= 1;
-				enemy.update(deltaTime, data.playerPosition, true);
+				float randomX = GetRandomValue(-600, 600) + tileX + enemyRect.width;
+				float randomY = GetRandomValue(-600, 600) + tileY + enemyRect.height;
+				std::cout << "Enemy spawned at " << randomX << randomY;
+				Enemy e = Enemy({ randomX, randomY }, &enemySheet, enemyRect);
+				data.enemys.push_back(e);
+				data.spawnTimer = 0;
 			}
-			else {
-				enemy.update(deltaTime, data.playerPosition, false);
+			for (int i = 0; i < data.enemys.size(); i++) {
+				Enemy& enemy = data.enemys[i];
+				Rectangle enemyColRect = {
+					enemy.position.x,
+					enemy.position.y,
+					enemyRect.width,
+					enemyRect.height
+				};
+
+				enemy.draw();
+
+
+				if (CheckCollisionRecs(userRect, enemyColRect)) {
+					data.health -= 1;
+					enemy.update(deltaTime, data.playerPosition, true);
+					if (data.health <= 0) {
+						data.state = GAMEOVER;
+					}
+				}
+				else {
+					enemy.update(deltaTime, data.playerPosition, false);
+				}
 			}
-		}
 
 
 
@@ -240,14 +271,42 @@ int main(void)
 			// Draw UI stuff in screen space after camera ends
 			healthbar.draw(data.health);
 			DrawTexture(cursorTexture, GetMouseX() - 16, GetMouseY() - 16, WHITE);
-			EndDrawing();
 		}
+		else if (data.state == GAMEOVER) {
 
+			int fontSize = 100;
+			// Strings are stored as  char* pointer to the first element
+			const char* gameOverText = "Game Over";
+			int textWidth = MeasureText(gameOverText, fontSize);
+			int centerX = screenWidth / 2 - textWidth / 2;
 
-		CloseWindow();
+			ClearBackground(GREEN);
+			DrawText(gameOverText, centerX, 200, 100, DARKGREEN);
 
-		return 0;
+			
+			Rectangle restartRec = { 300,700,600,200 };
+
+			DrawRectangleRec(restartRec, DARKGREEN);
+
+			const char* restartText = "Restart";
+			textWidth = MeasureText(restartText, fontSize);
+			centerX = screenWidth / 2 - textWidth / 2;
+			DrawText("Restart", centerX, 750, 100, GREEN);
+
+			Vector2 mousePosition = GetMousePosition();
+			if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePosition, restartRec)) {
+				data.state = PLAYING;
+			}
+			DrawTexture(cursorTexture, GetMouseX() - 16, GetMouseY() - 16, WHITE);
+		}
+		EndDrawing();
 	}
+
+
+	CloseWindow();
+
+	return 0;
+}
 
 
 void UpdatePlayer(int& orientation, float deltaTime) {
