@@ -296,6 +296,12 @@ int main(void)
 			Vector2 mousePosition = GetMousePosition();
 			if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePosition, restartRec)) {
 				data.state = PLAYING;
+				data.spawnTimer = 10.0f;
+				data.spawnInterval = 10.0f;
+				data.playerPosition = { 100, 100 };
+				data.health = data.maxHealth;
+				data.bullets.clear();
+				data.enemys.clear();
 			}
 			DrawTexture(cursorTexture, GetMouseX() - 16, GetMouseY() - 16, WHITE);
 		}
