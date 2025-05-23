@@ -34,10 +34,10 @@ void Enemy::update(float deltaTime, Vector2 playerPos, bool collision) {
 }
 
 void Enemy::draw() {
-	std::cout << "Drawing enemy";
+	// std::cout << "Drawing enemy";
 	Rectangle enemyRectangle{
 		(frame - 1) * frameSpace,
-		frameY,
+		frameYSpace,
 		frameWidth,
 		frameHeight
 

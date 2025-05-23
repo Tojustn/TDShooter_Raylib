@@ -16,6 +16,7 @@
 #include <GameLayer/enemy.h>
 #include <GameLayer/bullet.h>
 #include <GameLayer/healthbar.h>
+#include <GameLayer/user.h>
 #pragma endregion
 
 const enum Gameplay { STARTING, PLAYING, GAMEOVER };
@@ -24,9 +25,8 @@ struct GameplayData {
 	float spawnTimer = 10.0f;
 	float spawnInterval = 10.0f;
 
-	Vector2 playerPosition = { 100,100 };
-	const int maxHealth = 3;
-	int health = 3;
+	User* user = nullptr;
+
 	std::vector<Bullet> bullets;
 
 	std::vector<Enemy> enemys;
@@ -39,7 +39,6 @@ GameplayData data;
 
 constexpr int screenWidth = 1200;
 constexpr int screenHeight = 1200;
-void UpdatePlayer(int&, float);
 
 
 int main(void)
@@ -70,15 +69,14 @@ int main(void)
 	Image spriteBundle = LoadImage(RESOURCES_PATH "/walk.png");
 	Spritesheet walkSprite(spriteBundle);
 
+	data.user = new User(&walkSprite, 3);
+
 	Image spriteWeapon{ LoadImage(RESOURCES_PATH "Gun.png") };
 	Texture spriteWeaponText{ LoadTextureFromImage(spriteWeapon) };
-
-
 #pragma endregion 
 
 
 #pragma region enemyTexture
-	Rectangle enemyRect{ 39,24,18,15 };
 	Image enemyBundle = LoadImage(RESOURCES_PATH "goblin_walk.png");
 	Spritesheet enemySheet(enemyBundle);
 
@@ -134,30 +132,31 @@ int main(void)
 			float deltaTime = GetFrameTime();
 			ClearBackground(BLACK);
 			BeginMode2D(camera);
-			UpdatePlayer(orientation, deltaTime);
+			data.user->update(deltaTime);
 
 
-			camera.target = data.playerPosition;
+			camera.target = data.user->position;
 			tiledRenderer.draw(camera);
 
-			Rectangle userRect = { data.playerPosition.x - 16 * 6 / 2,
-		data.playerPosition.y - 16 * 6 / 2,16 * 6, 16 * 6 };
+			Rectangle userRect = { data.user->position.x - 16 * 6 / 2,
+		 data.user->position.y - 16 * 6 / 2,16 * 6, 16 * 6 };
 			// DrawRectangle(userRect.x, userRect.y, userRect.width, userRect.height, RED);
-			if (orientation == 0) {
-				walkSprite.drawSprite(data.playerPosition, { 32,32,spriteWidth,spriteHeight },false);
-			}
-			else if (orientation == 1) {
 
-				walkSprite.drawSprite(data.playerPosition, { 32,112,spriteWidth,spriteHeight },false);
+			/*
+			if (data.user.orientation == 0) {
+				data.user.sheet->drawSprite(data.user.position, { 32, 32, spriteWidth, spriteHeight }, false);
 			}
-			else if (orientation == 2) {
-
-				walkSprite.drawSprite(data.playerPosition, { 32,192,spriteWidth,spriteHeight }, false);
+			else if (data.user.orientation == 1) {
+				data.user.sheet->drawSprite(data.user.position, { 32, 112, spriteWidth, spriteHeight }, false);
 			}
-			else if (orientation == 3) {
-
-				walkSprite.drawSprite(data.playerPosition, { 32,32,spriteWidth,spriteHeight }, true);
+			else if (data.user.orientation == 2) {
+				data.user.sheet->drawSprite(data.user.position, { 32, 192, spriteWidth, spriteHeight }, false);
 			}
+			else if (data.user.orientation == 3) {
+				data.user.sheet->drawSprite(data.user.position, { 32, 32, spriteWidth, spriteHeight }, true);
+			}
+			*/
+			data.user->draw();
 
 
 #pragma region mousePos
@@ -175,8 +174,8 @@ int main(void)
 			float mouseAngle = atan2(mouseDirection.y, mouseDirection.x);
 			// No need to make negative since raylib has positive 90 facing down
 			// Place gun around the player using formula xcos(x) ysin(y)
-			DrawTexturePro(spriteWeaponText, { 12,8,27,16 }, { data.playerPosition.x + cos(mouseAngle) * 32,
-				data.playerPosition.y + sin(mouseAngle) * 32, 27 * 3,16 * 3 }, { 13.5,8 }, mouseAngle * RAD2DEG, WHITE);
+			DrawTexturePro(spriteWeaponText, { 12,8,27,16 }, { data.user->position.x + cos(mouseAngle) * 32,
+				 data.user->position.y + sin(mouseAngle) * 32, 27 * 3,16 * 3 }, { 13.5,8 }, mouseAngle * RAD2DEG, WHITE);
 
 
 #pragma endregion
@@ -187,14 +186,14 @@ int main(void)
 			data.spawnTimer += deltaTime;
 			Vector2 topLeft = GetScreenToWorld2D({ 0, 0 }, camera);
 			// Need to find what tile player is on
-			int tileX = static_cast<int>(floor(data.playerPosition.x / 1200));
-			int tileY = static_cast<int>(floor(data.playerPosition.y / 1200));
+			int tileX = static_cast<int>(floor(data.user->position.x / 1200));
+			int tileY = static_cast<int>(floor(data.user->position.y / 1200));
 			if (data.spawnTimer >= data.spawnInterval) {
 
-				float randomX = GetRandomValue(-600, 600) + tileX + enemyRect.width;
-				float randomY = GetRandomValue(-600, 600) + tileY + enemyRect.height;
+				float randomX = GetRandomValue(-600, 600) + tileX;
+				float randomY = GetRandomValue(-600, 600) + tileY;
 				std::cout << "Enemy spawned at " << randomX << randomY;
-				Enemy e = Enemy({ randomX, randomY }, &enemySheet, enemyRect);
+				Enemy e = Enemy({ randomX, randomY }, &enemySheet);
 				data.enemys.push_back(e);
 				data.spawnTimer = 0;
 			}
@@ -203,22 +202,22 @@ int main(void)
 				Rectangle enemyColRect = {
 					enemy.position.x,
 					enemy.position.y,
-					enemyRect.width,
-					enemyRect.height
+					enemy.frameWidth,
+					enemy.frameHeight	
 				};
 
 				enemy.draw();
 
 
 				if (CheckCollisionRecs(userRect, enemyColRect)) {
-					data.health -= 1;
-					enemy.update(deltaTime, data.playerPosition, true);
-					if (data.health <= 0) {
+					data.user->health -= 1;
+					enemy.update(deltaTime, data.user->position, true);
+					if (data.user->health <= 0) {
 						data.state = GAMEOVER;
 					}
 				}
 				else {
-					enemy.update(deltaTime, data.playerPosition, false);
+					enemy.update(deltaTime, data.user->position, false);
 				}
 			}
 
@@ -232,8 +231,8 @@ int main(void)
 				Bullet b;
 
 				b.position = {
-			data.playerPosition.x + cos(mouseAngle) ,
-			data.playerPosition.y + sin(mouseAngle) };
+			 data.user->position.x + cos(mouseAngle) ,
+			 data.user->position.y + sin(mouseAngle) };
 
 				//Normalize vector, getting the mouse position
 				b.fireDirection = mouseDirection;
@@ -250,7 +249,7 @@ int main(void)
 					Enemy& enemy = data.enemys[j];
 
 					Rectangle bulletRect = { bullet.position.x, bullet.position.y, 32,24 };
-					Rectangle enemyColRect = { enemy.position.x, enemy.position.y, enemyRect.width, enemyRect.height };
+					Rectangle enemyColRect = { enemy.position.x, enemy.position.y,enemy.frameWidth, enemy.frameHeight};
 
 					if (CheckCollisionRecs(bulletRect, enemyColRect)) {
 
@@ -269,7 +268,7 @@ int main(void)
 
 
 			// Draw UI stuff in screen space after camera ends
-			healthbar.draw(data.health);
+			healthbar.draw(data.user->health);
 			DrawTexture(cursorTexture, GetMouseX() - 16, GetMouseY() - 16, WHITE);
 		}
 		else if (data.state == GAMEOVER) {
@@ -298,8 +297,8 @@ int main(void)
 				data.state = PLAYING;
 				data.spawnTimer = 10.0f;
 				data.spawnInterval = 10.0f;
-				data.playerPosition = { 100, 100 };
-				data.health = data.maxHealth;
+				data.user->position = { 100, 100 };
+				data.user->health = data.user->maxHealth;
 				data.bullets.clear();
 				data.enemys.clear();
 			}
@@ -314,48 +313,3 @@ int main(void)
 	return 0;
 }
 
-
-void UpdatePlayer(int& orientation, float deltaTime) {
-	// Get the render time
-
-#pragma region movement
-
-	Vector2 move = {};
-
-	if (IsKeyDown(KEY_W)) {
-		move.y = { -1 };
-	}
-	if (IsKeyDown(KEY_S)) {
-		move.y = { 1 };
-	}
-	if (IsKeyDown(KEY_A)) {
-		move.x = { -1 };
-	}
-	if (IsKeyDown(KEY_D)) {
-		move.x = { 1 };
-	}
-
-	if (move.x != 0 || move.y != 0) {
-		// Make sure 1 unit is being moved
-		move = Vector2Normalize(move);
-		// Our velo, just distance/time 
-		move = Vector2Scale(move, deltaTime * 400);
-		data.playerPosition = Vector2Add(data.playerPosition, move);
-		if (move.y < 0) {
-			orientation = 2;
-
-		}
-		if (move.y > 0) {
-			orientation = 1;
-		}
-		if (move.x > 0) {
-			orientation = 0;
-		}
-		if (move.x < 0) {
-			orientation = 3;
-		}
-
-	}
-
-#pragma endregion
-}
