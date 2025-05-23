@@ -10,7 +10,6 @@ void User::draw() {
 		frameHeight
 	};
 
-	std::cout << userRect.y;
 	sheet->drawSprite(position, userRect, flipped);
 }
 

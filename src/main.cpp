@@ -200,15 +200,16 @@ int main(void)
 			for (int i = 0; i < data.enemys.size(); i++) {
 				Enemy& enemy = data.enemys[i];
 				Rectangle enemyColRect = {
-					enemy.position.x,
-					enemy.position.y,
-					enemy.frameWidth,
-					enemy.frameHeight	
+					enemy.position.x - enemy.frameWidth/2 *6,
+					enemy.position.y - enemy.frameHeight / 2 * 6,
+					enemy.frameWidth * 6,
+					enemy.frameHeight * 6	
 				};
 
 				enemy.draw();
 
 
+				// DrawRectangleRec(enemyColRect, RED);
 				if (CheckCollisionRecs(userRect, enemyColRect)) {
 					data.user->health -= 1;
 					enemy.update(deltaTime, data.user->position, true);
