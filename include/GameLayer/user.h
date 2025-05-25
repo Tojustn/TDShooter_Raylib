@@ -11,6 +11,7 @@ public:
 		: Character({ 100,100 }, spritesheet) {
 		this->maxHealth = maxHealth;
 		this->health = maxHealth;
+		speed = 500;
 		frame = 1;
 		maxFrames = 4;
 		frameSpace = 80;

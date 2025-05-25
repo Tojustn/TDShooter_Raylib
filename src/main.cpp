@@ -24,7 +24,7 @@ struct GameplayData {
 	Gameplay state = STARTING;
 	int score{ 0 };
 	float spawnTimer = 6.0f;
-	float spawnInterval = 6.0f;
+	float spawnInterval = 10.0f;
 
 	User* user = nullptr;
 
@@ -168,7 +168,6 @@ int main(void)
 
 
 #pragma region handle enemies
-			// Spawn enemies every 10 seconds
 			data.spawnTimer += deltaTime;
 			Vector2 topLeft = GetScreenToWorld2D({ 0, 0 }, camera);
 			// Need to find what tile player is on
@@ -179,12 +178,14 @@ int main(void)
 
 			int spawnNum = 1;
 			if (data.spawnTimer >= data.spawnInterval) {
+				
 
-				spawnNum = GetRandomValue(1, 5);
+				spawnNum = GetRandomValue(1, 3);
+				std::cout << "Spawning " << spawnNum << " enemies ";
 
 				for (int i = 0; i < spawnNum; i++) {
-					float offsetX = GetRandomValue(600, 1000); // distance away
-					float offsetY = GetRandomValue(600, 1000);
+					float offsetX = GetRandomValue(900, 1000); // distance away
+					float offsetY = GetRandomValue(900, 1000);
 
 					// Randomly flip direction (left/right or up/down)
 					if (GetRandomValue(0, 1)) offsetX *= -1;
