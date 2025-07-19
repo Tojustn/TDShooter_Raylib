@@ -181,7 +181,7 @@ int main(void)
 				
 
 				spawnNum = GetRandomValue(1, 3);
-				std::cout << "Spawning " << spawnNum << " enemies ";
+				// std::cout << "Spawning " << spawnNum << " enemies ";
 
 				for (int i = 0; i < spawnNum; i++) {
 					float offsetX = GetRandomValue(900, 1000); // distance away
@@ -302,6 +302,19 @@ int main(void)
 			Rectangle restartRec = { 300,700,600,200 };
 
 			DrawRectangleRec(restartRec, DARKGREEN);
+
+			const char* scoreText = TextFormat("Score: %d", data.score);
+
+			// Get width of the text in pixels
+			textWidth = MeasureText(scoreText, fontSize);
+
+			// Calculate center position
+			int x = (GetScreenWidth() / 2) - (textWidth / 2);
+			int y = 25;
+
+			DrawText(scoreText, x, y, fontSize, WHITE);
+
+
 
 			const char* restartText = "Restart";
 			textWidth = MeasureText(restartText, fontSize);
