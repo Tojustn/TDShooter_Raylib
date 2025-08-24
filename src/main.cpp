@@ -2,7 +2,7 @@
 #include "raymath.h"
 #include <iostream>
 #include <vector>
-
+#include <cstdint>
 #pragma region imgui
 #include "imgui.h"
 #include "rlImGui.h"
@@ -23,14 +23,20 @@ const enum Gameplay { STARTING, PLAYING, GAMEOVER };
 struct GameplayData {
 	Gameplay state = STARTING;
 	int score{ 0 };
-	float spawnTimer = 6.0f;
-	float spawnInterval = 10.0f;
 
 	User* user = nullptr;
 
 	std::vector<Bullet> bullets;
 
 	std::vector<Enemy> enemys;
+
+	std::uint8_t wave{ 1 };
+	int enemiesPerWave{ wave * 3 };
+	bool waveChange{ true };
+	float waveTextTimer{};
+
+	const char* nextWaveText = TextFormat("Next Wave!");
+
 
 };
 
@@ -168,38 +174,54 @@ int main(void)
 
 
 #pragma region handle enemies
-			data.spawnTimer += deltaTime;
 			Vector2 topLeft = GetScreenToWorld2D({ 0, 0 }, camera);
 			// Need to find what tile player is on
-			int tileX = static_cast<int>(floor(data.user->position.x / 1200));
-			int tileY = static_cast<int>(floor(data.user->position.y / 1200));
+			int tileX = static_cast<int>(floor(data.user->position.x / screenWidth));
+			int tileY = static_cast<int>(floor(data.user->position.y / screenHeight));
 			float baseX = tileX * 1200;
 			float baseY = tileY * 1200;
 
-			int spawnNum = 1;
-			if (data.spawnTimer >= data.spawnInterval) {
-				
+			int spawnNum = data.enemiesPerWave;
 
-				spawnNum = GetRandomValue(1, 3);
-				// std::cout << "Spawning " << spawnNum << " enemies ";
-
+			if (data.waveChange) {
 				for (int i = 0; i < spawnNum; i++) {
-					float offsetX = GetRandomValue(900, 1000); // distance away
-					float offsetY = GetRandomValue(900, 1000);
+					int side = GetRandomValue(0, 3);
 
-					// Randomly flip direction (left/right or up/down)
-					if (GetRandomValue(0, 1)) offsetX *= -1;
-					if (GetRandomValue(0, 1)) offsetY *= -1;
+					float randomX, randomY;
 
-					float randomX = baseX + offsetX;
-					float randomY = baseY + offsetY;
+					switch (side) {
+					case 0: // Right side
+						randomX = baseX + screenWidth + GetRandomValue(0, 200);
+						randomY = baseY + GetRandomValue(-screenHeight / 2, screenHeight / 2);
+						break;
+					case 1: // Bottom side
+						randomX = baseX + GetRandomValue(-screenWidth / 2, screenWidth / 2);
+						randomY = baseY + screenHeight + GetRandomValue(0, 200);
+						break;
+					case 2: // Left side
+						randomX = baseX - screenWidth - GetRandomValue(0, 200);
+						randomY = baseY + GetRandomValue(-screenHeight / 2, screenHeight / 2);
+						break;
+					case 3: // Top side
+						randomX = baseX + GetRandomValue(-screenWidth / 2, screenWidth / 2);
+						randomY = baseY - screenHeight - GetRandomValue(0, 200);
+						break;
+					}
+
 					Enemy e({ randomX, randomY }, &enemySheet);
 					data.enemys.push_back(e);
 				}
-
-				data.spawnTimer *= 0.9f;
-
+				data.waveChange = false;
 			}
+
+			if (data.enemys.size() <= 0) {
+				data.wave++;
+				data.waveChange = true;
+				data.waveTextTimer = 1.0f;
+			
+			}
+						
+
 			for (int i = 0; i < data.enemys.size(); i++) {
 				Enemy& enemy = data.enemys[i];
 				Rectangle enemyColRect = {
@@ -209,7 +231,6 @@ int main(void)
 					enemy.frameHeight * 6
 				};
 				//DrawRectangleRec(enemyColRect, RED);
-
 				enemy.draw();
 
 
@@ -282,11 +303,37 @@ int main(void)
 			EndMode2D();
 
 
+
 			// Draw UI stuff in screen space after camera ends
 			healthbar.draw(data.user->health);
 			DrawTexture(cursorTexture, GetMouseX() - 16, GetMouseY() - 16, WHITE);
 			DrawText(TextFormat("Score: %d", data.score), 900, 25, 50, WHITE);
-}
+
+			constexpr int waveTextSize = 20;
+			constexpr int waveTextPadding = 20;
+
+			std::string waveText = TextFormat("Wave: %i", data.wave);
+
+			int textWidth = MeasureText(waveText.c_str(), waveTextSize);
+
+			DrawText(
+				waveText.c_str(),
+				screenWidth - textWidth - waveTextPadding,
+				screenHeight - waveTextSize - waveTextPadding,
+				waveTextSize,
+				WHITE
+			);
+
+			if (data.waveTextTimer > 0.0f) {
+				int fontSize = 100;
+				int textWidth = MeasureText(data.nextWaveText, fontSize);
+				int centerX = screenWidth / 2 - textWidth / 2;
+				int centerY = screenHeight / 2 - fontSize / 2;
+				DrawText(data.nextWaveText, centerX, centerY, fontSize, WHITE);
+				data.waveTextTimer -= deltaTime;
+				if (data.waveTextTimer < 0.0f) data.waveTextTimer = 0.0f;
+			}
+		}
 		else if (data.state == GAMEOVER) {
 
 			int fontSize = 100;
@@ -324,9 +371,8 @@ int main(void)
 			Vector2 mousePosition = GetMousePosition();
 			if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePosition, restartRec)) {
 				data.state = PLAYING;
-				data.spawnTimer = 6.0f;
-				data.spawnInterval = 6.0f;
 				data.user->position = { 100, 100 };
+				data.wave = 1;
 				data.score = 0;
 				data.user->health = data.user->maxHealth;
 				data.bullets.clear();
